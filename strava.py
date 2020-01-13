@@ -1,5 +1,4 @@
-"""
-    Strava API definition
+""" Strava API definition
 
     Author: Owen Webb (owebb@umich.edu)
     Date: 1/11/2020
@@ -21,6 +20,7 @@ class AuthenticationError(StravaError):
 
 class Strava(object):
     def __init__(self):
+        """Set url constants and load authentication data."""
         self.base_url = 'https://www.strava.com/'
         self.auth_url = 'oauth/token'
         self.activity_url = 'api/v3/athlete/activities'
@@ -29,6 +29,7 @@ class Strava(object):
             self.auth = json.load(fin)
 
     def authenticate(self):
+        """Authenticates the user whose auth data is in strava_auth.json."""
         if time.time() < self.auth['expires']:
             return
 
@@ -56,16 +57,20 @@ class Strava(object):
         with open('strava_auth.json', 'w') as fout:
             fout.write(json.dumps(self.auth))
 
-    def get_activity(self):
+    def get_activities(self, n=30):
+        """Returns the n most recent activities. Max 30."""
         self.authenticate()
 
+        # build auth header for this specific request, send, error check
         auth_header = {'Authorization' : f"Bearer {self.auth['access_token']}"}
         r = requests.get(self.base_url + self.activity_url, headers=auth_header)
-        print(json.dumps(json.loads(r.text)[0], indent=4))
+        if r.status_code != 200:
+            raise StravaError(f'Activity request failed. Code: {r.status_code}')
 
+        return json.loads(r.text)[:n]
 
 
 if __name__ == '__main__':
     # TESTING
     s = Strava()
-    s.get_activity()
+    s.get_activities()
