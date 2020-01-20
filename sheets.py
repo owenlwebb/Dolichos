@@ -27,7 +27,7 @@ class GoogleSheets(object):
          self.sheet_id = sheet_id
 
       # set scope
-      if rw=True:
+      if rw:
          self.scope = 'https://www.googleapis.com/auth/spreadsheets'
       else:
          self.scope = 'https://www.googleapis.com/auth/spreadsheets.readonly'
