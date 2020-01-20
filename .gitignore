@@ -1,3 +1,7 @@
 *.conf
 *.json
-
+*.identity
+*.pickle
+*.pyc
+__pycache__/*
+quickstart.py
