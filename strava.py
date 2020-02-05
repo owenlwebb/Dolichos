@@ -68,7 +68,7 @@ class Strava(object):
             raise StravaError(f'Request to {url} failed. Code: {r.status_code}')
         return json.loads(r.text)
 
-    def get_activity_list(self, n=30):
+    def activity_list(self, n=30):
         """Returns the n most recent activities. Max 30."""
         return self.make_request(self.activities_url)[:n]
 
