@@ -5,10 +5,15 @@
 """
 import os.path
 import pickle
+import re
 
 from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
+
+
+class GoogleSheetsError(BaseException):
+   pass
 
 
 class GoogleSheets(object):
@@ -37,6 +42,59 @@ class GoogleSheets(object):
       self.auth_file = 'sheets_auth.json'
 
       self.authenticate()
+
+   def name_to_sheetid(self, name):
+      """Return integer sheet id of a particular sheet within the 
+      spreadsheet."""
+      req = self.sheet.get(spreadsheetId=self.sheet_id, 
+                           fields='sheets/properties')
+      sheet_props = req.execute()
+
+      for sheet in (s['properties'] for s in sheet_props['sheets']):
+         if sheet['title'] == name:
+            return sheet['sheetId']
+
+      raise GoogleSheetsError(f'Could not find sheet: {name}')
+
+   @staticmethod
+   def column_letter_to_num(col):
+      index = 0
+      for i, char in enumerate(reversed(col)):
+            index += ((ord(char) - 96) * (26**i))
+      return index
+
+   def a1_to_gridrange(self, a1coords):
+      """Convert A1 notation coordinates of the form SheetName!COORDS to
+      a GridRange object required by some v4 Sheets API calls.
+      """
+      try:
+         name, coords = a1coords.split('!')
+      except ValueError:
+         msg = 'Coordinates must be of the form SHEETNAME!COORDS'
+         raise GoogleSheetsError(msg)
+
+      # assume only one cell and adjust to a range later if needed
+      start_cell = coords.split(':')[0].lower()
+      start_col, start_row = re.match('([a-z]+)([0-9]+)', start_cell).groups()
+
+      startRowIndex = int(start_row) - 1
+      endRowIndex = startRowIndex + 1
+      startColumnIndex = self.column_letter_to_num(start_col) - 1
+      endColumnIndex = startColumnIndex + 1
+
+      if ':' in a1coords:
+         end_col, end_row = re.match('([a-z]+)([0-9]+)', coords).groups()
+         endRowIndex = end_row
+         endColumnIndex = self.column_letter_to_num(end_col)
+      
+      target_id = self.name_to_sheetid(name)
+      return {
+         "sheetId" : target_id,
+         "startRowIndex": startRowIndex,
+         "endRowIndex": endRowIndex,
+         "startColumnIndex": startColumnIndex,
+         "endColumnIndex": endColumnIndex
+      }
 
    def authenticate(self):
       """Authenticate the Google Sheets API, most code here stolen from:
@@ -74,9 +132,38 @@ class GoogleSheets(object):
                                        valueInputOption='USER_ENTERED')
       req.execute()
 
+   def get_cell_note(self, coords):
+      """Get note at the single cell belonging to coords in the authenticated 
+         sheet.
+
+         coords should be in A1 format (eg. Owen!A1:A1)
+      """
+      req = self.sheet.get(spreadsheetId=self.sheet_id,
+                           ranges=coords,
+                           fields='sheets/data/rowData/values/note').execute()
+      return req['sheets'][0]['data'][0]['rowData'][0]['values'][0]['note']
+
+   def set_cell_note(self, coords, text, append=True):
+      """Set note at the single cell belonging to coords in the authenticated
+      sheet. If append==True, text will be appended to the existing note.
+      """
+      req_body = {
+         "requests": [
+            {
+                  "repeatCell": {
+                     "range": self.a1_to_gridrange(coords),
+                     "cell": {"note": text},
+                     "fields": "note",
+                  }
+            }
+         ]
+      }
+      req = self.sheet.batchUpdate(spreadsheetId=self.sheet_id, body=req_body)
+      req.execute()
+
 
 if __name__ == '__main__':
    # TESTING
-   gs = GoogleSheets('the_doc.identity')
-   gs.set_cell('Owen!D5', 'hi johnny')
-   print(gs.get_cell('Owen!D5'))
+   # gs = GoogleSheets('the_doc.identity')
+   # gs.get_cell_note('abc', 'def')
+   GoogleSheets('the_doc.identity').set_cell_note('Owen!a1', "")
