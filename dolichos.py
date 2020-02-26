@@ -5,14 +5,13 @@
     Author: Owen Webb (owebb@umich.edu)
     Date: 1/13/2020
 """
-from dataclasses import dataclass
-from datetime import datetime, date
-from string import ascii_uppercase
 from collections import defaultdict
+from dataclasses import dataclass
+from datetime import date, datetime
+from string import ascii_uppercase
 
-import strava
 import sheets
-
+import strava
 
 SEMESTER_START = date(2020, 1, 6)
 SHEET_NAME = 'Owen'
@@ -38,8 +37,8 @@ def main():
     # maps a day to a list of Activities (see dataclass above)
     date_act_map = defaultdict(list)
 
-    # iter over activities
-    for act in s.activity_list(5):
+    # pull activity data from Strava 
+    for act in s.activity_list(10):
         # extract vars and make conversions
         act_dt = tstamp_to_dt(act['start_date_local'])
 
@@ -62,7 +61,10 @@ def main():
                                                     act_dt,
                                                     act_id))
 
-    for act_date in sorted(date_act_map):
+    # begin per-day aggregation an processing. Skip first day so that we don't
+    # accidentally overwrite an older day with partial data (since we fetch
+    # a fixed number of activites from Strava).
+    for act_date in sorted(date_act_map)[1:]:
         # sort by time began that day
         act_lst = sorted(date_act_map[act_date], key=lambda a: a.timestamp)
 
