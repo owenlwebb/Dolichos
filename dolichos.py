@@ -65,6 +65,17 @@ def main():
     # accidentally overwrite an older day with partial data (since we fetch
     # a fixed number of activites from Strava).
     for act_date in sorted(date_act_map)[1:]:
+        # calculate coords of target cell
+        row, col = date_to_cell(act_date)
+        title_cell = f'{SHEET_NAME}!{col}{row}'
+        distance_cell = f'{SHEET_NAME}!{col}{row + 1}'
+
+        # check if target cell has been manually edited, i.e. the title_cell
+        # note is prepended with an asterisk. Skip manually edited days!
+        curr_note = the_doc.get_cell_note(title_cell)
+        if curr_note.strip().startswith('*'):
+            continue
+        
         # sort by time began that day
         act_lst = sorted(date_act_map[act_date], key=lambda a: a.timestamp)
 
@@ -92,11 +103,6 @@ def main():
                 primary_act = act
 
         full_desc = "\n\n".join(full_desc)
-
-        # calculate coords of target cell
-        row, col = date_to_cell(act_date)
-        title_cell = f'{SHEET_NAME}!{col}{row}'
-        distance_cell = f'{SHEET_NAME}!{col}{row + 1}'
 
         # send to doc
         the_doc.set_cell(title_cell, primary_act.title)
