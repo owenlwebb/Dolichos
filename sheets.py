@@ -142,7 +142,11 @@ class GoogleSheets(object):
       req = self.sheet.get(spreadsheetId=self.sheet_id,
                            ranges=coords,
                            fields='sheets/data/rowData/values/note').execute()
-      return req['sheets'][0]['data'][0]['rowData'][0]['values'][0]['note']
+
+      try:
+         return req['sheets'][0]['data'][0]['rowData'][0]['values'][0]['note']
+      except KeyError: # no note!
+         return None
 
    def set_cell_note(self, coords, text, append=True):
       """Set note at the single cell belonging to coords in the authenticated

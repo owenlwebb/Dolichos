@@ -73,9 +73,9 @@ def main():
         # check if target cell has been manually edited, i.e. the title_cell
         # note is prepended with an asterisk. Skip manually edited days!
         curr_note = the_doc.get_cell_note(title_cell)
-        if curr_note.strip().startswith('*'):
+        if curr_note and curr_note.strip().startswith('*'):
             continue
-        
+
         # sort by time began that day
         act_lst = sorted(date_act_map[act_date], key=lambda a: a.timestamp)
 
