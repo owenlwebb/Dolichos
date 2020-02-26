@@ -39,7 +39,7 @@ def main():
     date_act_map = defaultdict(list)
 
     # iter over activities
-    for act in s.activity_list():
+    for act in s.activity_list(5):
         # extract vars and make conversions
         act_dt = tstamp_to_dt(act['start_date_local'])
 
@@ -78,8 +78,8 @@ def main():
             total_dist += act.distance 
 
             # compile the aggregate description for this day
-            full_desc.append(f'{act.timestamp.strftime("%I:%M %p")} \
-                               {act.title} - {act.distance}mi')
+            full_desc.append((f'{act.timestamp.strftime("%I:%M%p").lower()} '
+                              f'{act.title} - {act.distance}mi'))
             if act.description: full_desc[-1] += f': {act.description}'
 
             # update "primary" activity which will be displayed in the "details"
