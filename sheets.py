@@ -99,6 +99,7 @@ class GoogleSheets(object):
    def authenticate(self):
       """Authenticate the Google Sheets API, most code here stolen from:
       https://developers.google.com/resources/api-libraries/documentation/sheets/v4/python/latest/sheets_v4.spreadsheets.values.html"""
+      creds = None
       if os.path.exists(self.token_file):
          with open(self.token_file, 'rb') as token:
             creds = pickle.load(token)
