@@ -23,7 +23,7 @@ class Strava(object):
         """Set url constants and load authentication data."""
         self.base_url = 'https://www.strava.com/api/v3/'
         self.auth_url = 'oauth/token'
-        self.activities_url = 'athlete/activities'
+        self.activities_url = 'athlete/activities?per_page={}'
         self.detailed_activity_url = 'activities/'
 
         with open('strava_auth.json', 'r') as fin:
@@ -70,7 +70,7 @@ class Strava(object):
 
     def activity_list(self, n=30):
         """Returns the n most recent activities. Max 30."""
-        return self.make_request(self.activities_url)[:n]
+        return self.make_request(self.activities_url.format(n))
 
     def get_detailed_activity(self, activity_id):
         """Returns the full, detailed activity corresponding to activity_id."""
