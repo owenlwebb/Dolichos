@@ -33,9 +33,9 @@ class GoogleSheets(object):
 
       # set scope
       if rw:
-         self.scope = 'https://www.googleapis.com/auth/spreadsheets'
+         self.scope = ['https://www.googleapis.com/auth/spreadsheets']
       else:
-         self.scope = 'https://www.googleapis.com/auth/spreadsheets.readonly'
+         self.scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
       # set file vars
       self.token_file = 'sheets_token.pickle'
